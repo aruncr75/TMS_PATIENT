@@ -41,3 +41,16 @@ export function isSameDay(isoA: string, isoB: string): boolean {
 export function todayInClinicTz(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: _clinicTz }) // YYYY-MM-DD
 }
+
+// Format a date-only `YYYY-MM-DD` value (e.g. a dependent's dateOfBirth) for display.
+// Date-only values are NOT instants: do NOT route them through `formatDate`, which parses
+// them as UTC midnight and shifts the calendar day backwards in any negative-offset zone.
+// Constructing a local Date from the parts keeps the day exactly as stored.
+export function formatDateOnly(ymd: string): string {
+  const [y, m, d] = ymd.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
