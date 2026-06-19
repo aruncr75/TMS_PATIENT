@@ -20,6 +20,7 @@
   --color-status-completed: #6b7280;
   --color-status-cancelled: #dc2626;
   --color-status-no-show: #9333ea;
+  --color-status-rescheduled: #475569;
 
   /* Spacing scale */
   --spacing-safe-bottom: env(safe-area-inset-bottom, 0px);

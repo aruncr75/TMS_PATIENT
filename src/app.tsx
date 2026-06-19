@@ -10,6 +10,10 @@ import DoctorSelectPage from '@/pages/booking/doctor-select'
 import SlotPickerPage from '@/pages/booking/slot-picker'
 import BookingConfirmPage from '@/pages/booking/booking-confirm'
 import BookingSuccessPage from '@/pages/booking/booking-success'
+import AppointmentsListPage from '@/pages/appointments/list'
+import AppointmentDetailPage from '@/pages/appointments/detail'
+import CancelAppointmentPage from '@/pages/appointments/cancel'
+import ReschedulePage from '@/pages/appointments/reschedule'
 import { AuthGuard } from '@/lib/auth/auth-guard'
 import { AppShell } from '@/components/layout/app-shell'
 import { PageHeader } from '@/components/layout/page-header'
@@ -72,10 +76,10 @@ export default function App() {
           <Route path="/book/success" element={<BookingSuccessPage />} />
 
           {/* Appointments */}
-          <Route path="/appointments" element={<PlaceholderPage label="My Appointments — Phase 4" />} />
-          <Route path="/appointments/:id" element={<PlaceholderPage label="Appointment Detail — Phase 4" />} />
-          <Route path="/appointments/:id/cancel" element={<PlaceholderPage label="Cancel — Phase 4" />} />
-          <Route path="/appointments/:id/reschedule" element={<PlaceholderPage label="Reschedule — Phase 4" />} />
+          <Route path="/appointments" element={<AppointmentsListPage />} />
+          <Route path="/appointments/:id" element={<AppointmentDetailPage />} />
+          <Route path="/appointments/:id/cancel" element={<CancelAppointmentPage />} />
+          <Route path="/appointments/:id/reschedule" element={<ReschedulePage />} />
 
           {/* Queue */}
           <Route path="/appointments/:id/checkin" element={<PlaceholderPage label="Check In — Phase 5" />} />
