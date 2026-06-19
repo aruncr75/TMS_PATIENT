@@ -6,6 +6,10 @@ import ProfileEditPage from '@/pages/profile/edit'
 import DependentsPage from '@/pages/profile/dependents'
 import AddDependentPage from '@/pages/profile/add-dependent'
 import EditDependentPage from '@/pages/profile/edit-dependent'
+import DoctorSelectPage from '@/pages/booking/doctor-select'
+import SlotPickerPage from '@/pages/booking/slot-picker'
+import BookingConfirmPage from '@/pages/booking/booking-confirm'
+import BookingSuccessPage from '@/pages/booking/booking-success'
 import { AuthGuard } from '@/lib/auth/auth-guard'
 import { AppShell } from '@/components/layout/app-shell'
 import { PageHeader } from '@/components/layout/page-header'
@@ -62,10 +66,10 @@ export default function App() {
           <Route path="/profile/dependents/:id/edit" element={<EditDependentPage />} />
 
           {/* Booking */}
-          <Route path="/book" element={<PlaceholderPage label="Select Doctor — Phase 3" />} />
-          <Route path="/book/:doctorId/slots" element={<PlaceholderPage label="Slot Picker — Phase 3" />} />
-          <Route path="/book/:doctorId/confirm" element={<PlaceholderPage label="Booking Confirm — Phase 3" />} />
-          <Route path="/book/success" element={<PlaceholderPage label="Booking Success — Phase 3" />} />
+          <Route path="/book" element={<DoctorSelectPage />} />
+          <Route path="/book/:doctorId/slots" element={<SlotPickerPage />} />
+          <Route path="/book/:doctorId/confirm" element={<BookingConfirmPage />} />
+          <Route path="/book/success" element={<BookingSuccessPage />} />
 
           {/* Appointments */}
           <Route path="/appointments" element={<PlaceholderPage label="My Appointments — Phase 4" />} />

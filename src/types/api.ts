@@ -27,6 +27,15 @@ export interface DependentView {
   createdAt: string
 }
 
+// ── Doctors ───────────────────────────────────────────────────────────────────
+// GET /doctors → DoctorCardView[]. Patient-facing booking directory: slim and
+// PHI-free (no login email / status), mirrors backend toDoctorCardView.
+export interface DoctorCardView {
+  id: string
+  displayName: string
+  specialization: string | null
+}
+
 // ── Appointment FSM states ────────────────────────────────────────────────────
 export type AppointmentStatus =
   | 'requested'
