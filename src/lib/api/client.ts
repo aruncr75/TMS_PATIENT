@@ -1,8 +1,18 @@
 import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
+export const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
 
 export const api = axios.create({
+  baseURL: BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+})
+
+// Interceptor-free instance for public auth routes (otp request/verify, logout).
+// These must NOT pass through the 401-refresh interceptor below: during login
+// there is no refresh token, so a wrong-OTP 401 would otherwise be mistaken for
+// an expired access token and hard-redirect to /login instead of surfacing the
+// error. `performRefresh` likewise hits the API outside the interceptor.
+export const publicApi = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
@@ -67,8 +77,8 @@ async function performRefresh(): Promise<string> {
   const refreshToken = getRefreshToken()
   if (!refreshToken) throw new Error('No refresh token')
 
-  const { data } = await axios.post<{ accessToken: string; refreshToken: string }>(
-    `${BASE_URL}/auth/refresh`,
+  const { data } = await publicApi.post<{ accessToken: string; refreshToken: string }>(
+    '/auth/refresh',
     { refreshToken },
   )
 
@@ -78,14 +88,26 @@ async function performRefresh(): Promise<string> {
 }
 
 // ── Initialise session from stored refresh token on app start ─────────────────
-export async function hydrateSession(): Promise<boolean> {
-  const refreshToken = getRefreshToken()
-  if (!refreshToken) return false
-  try {
-    await performRefresh()
-    return true
-  } catch {
-    clearTokens()
-    return false
-  }
+// Refresh tokens are single-use + rotated; presenting an already-rotated token
+// revokes the whole family. React StrictMode double-invokes the mount effect,
+// so concurrent calls must share ONE in-flight refresh rather than each
+// presenting the same stored token.
+let hydratePromise: Promise<boolean> | null = null
+
+export function hydrateSession(): Promise<boolean> {
+  if (hydratePromise) return hydratePromise
+  hydratePromise = (async () => {
+    const refreshToken = getRefreshToken()
+    if (!refreshToken) return false
+    try {
+      await performRefresh()
+      return true
+    } catch {
+      clearTokens()
+      return false
+    }
+  })().finally(() => {
+    hydratePromise = null
+  })
+  return hydratePromise
 }
