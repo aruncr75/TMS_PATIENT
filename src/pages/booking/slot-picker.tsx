@@ -7,6 +7,7 @@ import { todayInClinicTz } from '@/lib/utils/date'
 import { useToast } from '@/components/ui/toast'
 import { PageHeader } from '@/components/layout/page-header'
 import { SlotGrid } from '@/components/slot-grid'
+import { WaitlistJoinCard } from '@/components/waitlist-join-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { SlotOption } from '@/types/api'
 
@@ -65,6 +66,9 @@ export default function SlotPickerPage() {
           <p className="py-8 text-center text-sm text-status-cancelled" role="alert">
             Couldn't load availability. Please try again.
           </p>
+        ) : (slots?.length ?? 0) === 0 && doctorId ? (
+          // Fully booked day → offer the waitlist instead of an empty grid.
+          <WaitlistJoinCard doctorId={doctorId} date={date} />
         ) : (
           <div className={isFetching ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
             <SlotGrid slots={slots ?? []} onSelect={handleSelect} pending={hold.isPending} />

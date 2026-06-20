@@ -16,6 +16,8 @@ import CancelAppointmentPage from '@/pages/appointments/cancel'
 import ReschedulePage from '@/pages/appointments/reschedule'
 import CheckInPage from '@/pages/queue/checkin'
 import QueueTrackPage from '@/pages/queue/track'
+import WaitlistListPage from '@/pages/waitlist/list'
+import WaitlistAcceptPage from '@/pages/waitlist/accept'
 import { AuthGuard } from '@/lib/auth/auth-guard'
 import { AppShell } from '@/components/layout/app-shell'
 import { PageHeader } from '@/components/layout/page-header'
@@ -45,6 +47,12 @@ function HomePage() {
           className="block rounded-2xl bg-brand-600 p-5 text-center font-semibold text-white hover:bg-brand-700"
         >
           Book an appointment
+        </Link>
+        <Link
+          to="/waitlist"
+          className="block rounded-2xl bg-white p-5 text-center font-semibold text-brand-700 shadow-sm hover:bg-brand-50"
+        >
+          My waitlist
         </Link>
       </div>
     </div>
@@ -88,8 +96,8 @@ export default function App() {
           <Route path="/queue" element={<QueueTrackPage />} />
 
           {/* Waitlist */}
-          <Route path="/waitlist" element={<PlaceholderPage label="Waitlist — Phase 6" />} />
-          <Route path="/waitlist/:id/accept" element={<PlaceholderPage label="Accept Slot — Phase 6" />} />
+          <Route path="/waitlist" element={<WaitlistListPage />} />
+          <Route path="/waitlist/:id/accept" element={<WaitlistAcceptPage />} />
 
           {/* Notifications */}
           <Route path="/notifications" element={<PlaceholderPage label="Notification Settings — Phase 7" />} />

@@ -5,6 +5,8 @@ interface HoldCountdownProps {
   expiresAt: string
   /** Called exactly once when the countdown reaches zero. */
   onExpire: () => void
+  /** Caption shown beside the timer. Defaults to the booking-hold wording. */
+  label?: string
 }
 
 function remainingMs(expiresAt: string): number {
@@ -14,7 +16,7 @@ function remainingMs(expiresAt: string): number {
 // TTL bar shown while confirming a held slot. Ticks every second and fires
 // `onExpire` once at zero. Re-arms when `expiresAt` changes (e.g. after the user
 // picks an alternative and the slot is re-held).
-export function HoldCountdown({ expiresAt, onExpire }: HoldCountdownProps) {
+export function HoldCountdown({ expiresAt, onExpire, label = 'Slot held for' }: HoldCountdownProps) {
   const [remaining, setRemaining] = useState(() => remainingMs(expiresAt))
   const totalRef = useRef(remainingMs(expiresAt))
   const firedRef = useRef(false)
@@ -48,7 +50,7 @@ export function HoldCountdown({ expiresAt, onExpire }: HoldCountdownProps) {
   return (
     <div className="flex flex-col gap-1.5" role="timer" aria-live="off">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-gray-700">Slot held for</span>
+        <span className="font-medium text-gray-700">{label}</span>
         <span
           className={`font-semibold tabular-nums ${low ? 'text-status-cancelled' : 'text-brand-700'}`}
         >

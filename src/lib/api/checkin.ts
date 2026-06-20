@@ -8,7 +8,11 @@ import type { CheckInView, QueueSnapshot } from '@/types/api'
 // this endpoint (unlike confirm/cancel) but we always send one so a double-tap or a
 // 401-refresh retry returns the SAME token rather than enqueuing twice.
 export async function selfCheckIn(id: string, idempotencyKey: string): Promise<CheckInView> {
-  const { data } = await api.post<CheckInView>(`/appointments/${id}/check-in`, null, {
+  // Body is `{}` (not `null`): the `api` instance defaults Content-Type to
+  // application/json, so a `null` body serializes to the string "null" and the
+  // backend's strict JSON parser 400s it. This endpoint ignores the body; the
+  // idempotency key rides in the header.
+  const { data } = await api.post<CheckInView>(`/appointments/${id}/check-in`, {}, {
     headers: { 'idempotency-key': idempotencyKey },
   })
   return data

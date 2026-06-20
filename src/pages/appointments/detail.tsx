@@ -92,6 +92,16 @@ export default function AppointmentDetailPage() {
                 )}
               </div>
             )}
+
+            {/* Single join path: opens this doctor's availability, which offers the
+                waitlist when the chosen day is fully booked. */}
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => navigate(`/book/${appt.doctorId}/slots`)}
+            >
+              Book or join waitlist
+            </Button>
           </>
         )}
       </div>

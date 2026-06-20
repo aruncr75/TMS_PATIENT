@@ -170,6 +170,7 @@ export interface QueueSnapshot {
 
 // ── Waitlist ─────────────────────────────────────────────────────────────────
 // Backend types `status` as a plain string; do not narrow to an invented union.
+// status ∈ waiting | offered | accepted | expired | cancelled.
 export interface WaitlistEntryView {
   id: string
   doctorId: string
@@ -179,6 +180,16 @@ export interface WaitlistEntryView {
   offeredSlotId: string | null
   offerExpiresAt: string | null
   createdAt: string
+}
+
+// POST /doctors/:doctorId/waitlist body. NOTE the field-name split: the request
+// sends `date` (a clinic-local YYYY-MM-DD), but the view above echoes it back as
+// `serviceDate` — never send `serviceDate`. dependentId/consultationType are frozen
+// here and flow straight through to the appointment created at accept.
+export interface JoinWaitlistInput {
+  date: string
+  dependentId?: string
+  consultationType?: 'free' | 'paid'
 }
 
 // ── Error envelope ────────────────────────────────────────────────────────────
