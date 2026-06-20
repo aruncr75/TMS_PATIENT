@@ -102,12 +102,26 @@ export function hydrateSession(): Promise<boolean> {
     try {
       await performRefresh()
       return true
-    } catch {
-      clearTokens()
-      return false
+    } catch (err) {
+      // Only an actual auth rejection (the server refused the refresh token) clears
+      // the session. Offline/timeout reloads (no HTTP response) AND transient server
+      // errors (5xx) keep the refresh token so a flaky network/server can't log the
+      // patient out — the access token is minted lazily on the first successful
+      // online request via the 401 interceptor above.
+      if (isAuthRejection(err)) {
+        clearTokens()
+        return false
+      }
+      return true
     }
   })().finally(() => {
     hydratePromise = null
   })
   return hydratePromise
+}
+
+// The refresh token was actively refused (vs. an unreachable/erroring server).
+function isAuthRejection(err: unknown): boolean {
+  const status = (err as { response?: { status?: number } })?.response?.status
+  return status === 401 || status === 403
 }

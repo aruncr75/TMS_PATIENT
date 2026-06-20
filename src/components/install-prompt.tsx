@@ -21,9 +21,30 @@ export function isStandalone(): boolean {
   return window.matchMedia('(display-mode: standalone)').matches || iosStandalone
 }
 
+// Once dismissed, the prompt stays hidden for 7 days (per-device, localStorage — no
+// PHI). Stores the dismissal time; a future visit re-shows it after the window lapses.
+const DISMISS_KEY = 'install-prompt-dismissed-at'
+const DISMISS_MS = 7 * 24 * 60 * 60 * 1000
+
+function isDismissed(): boolean {
+  if (typeof localStorage === 'undefined') return false
+  const at = Number(localStorage.getItem(DISMISS_KEY))
+  return Number.isFinite(at) && at > 0 && Date.now() - at < DISMISS_MS
+}
+
 export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null)
   const [installed, setInstalled] = useState(isStandalone())
+  const [dismissed, setDismissed] = useState(isDismissed)
+
+  const dismiss = () => {
+    try {
+      localStorage.setItem(DISMISS_KEY, String(Date.now()))
+    } catch {
+      // ignore storage failures — just hide for this session
+    }
+    setDismissed(true)
+  }
 
   useEffect(() => {
     const onBeforeInstall = (e: Event) => {
@@ -42,12 +63,13 @@ export function InstallPrompt() {
     }
   }, [])
 
-  if (installed) return null
+  if (installed || dismissed) return null
 
   // iOS: manual install instructions (no programmatic prompt).
   if (isIos()) {
     return (
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
+      <div className="relative rounded-2xl bg-white p-5 shadow-sm">
+        <DismissButton onDismiss={dismiss} />
         <p className="font-medium text-gray-900">Install this app for notifications</p>
         <p className="mt-1 text-sm text-gray-500">
           On iPhone or iPad, tap the <span className="font-semibold">Share</span> button, then{' '}
@@ -61,7 +83,8 @@ export function InstallPrompt() {
   // Android / desktop Chrome: replay the captured install prompt.
   if (deferred) {
     return (
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
+      <div className="relative rounded-2xl bg-white p-5 shadow-sm">
+        <DismissButton onDismiss={dismiss} />
         <p className="font-medium text-gray-900">Install this app</p>
         <p className="mt-1 text-sm text-gray-500">
           Add it to your home screen for a faster, full-screen experience.
@@ -82,4 +105,17 @@ export function InstallPrompt() {
   }
 
   return null
+}
+
+function DismissButton({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onDismiss}
+      aria-label="Dismiss install prompt"
+      className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+    >
+      ✕
+    </button>
+  )
 }

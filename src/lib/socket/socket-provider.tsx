@@ -7,6 +7,8 @@ interface QueueSocketContextValue {
   snapshot: QueueSnapshot | null
   status: QueueConnectionStatus
   errorCode: string | null
+  /** Wall-clock ms when the current snapshot was applied — drives the "as of N min ago" label. */
+  lastUpdatedAt: number | null
 }
 
 const QueueSocketContext = createContext<QueueSocketContextValue | null>(null)
@@ -19,6 +21,7 @@ export function QueueSocketProvider({ doctorId, children }: { doctorId: string; 
   const [snapshot, setSnapshot] = useState<QueueSnapshot | null>(null)
   const [status, setStatus] = useState<QueueConnectionStatus>('connecting')
   const [errorCode, setErrorCode] = useState<string | null>(null)
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null)
 
   // Single seq authority (§17.4): both live pushes and REST seeds funnel through
   // `applySnapshot`, so a slower REST response can never clobber a newer live frame.
@@ -31,11 +34,13 @@ export function QueueSocketProvider({ doctorId, children }: { doctorId: string; 
     setSnapshot(null)
     setStatus('connecting')
     setErrorCode(null)
+    setLastUpdatedAt(null)
 
     const applySnapshot = (next: QueueSnapshot) => {
       if (!active || next.seq < lastSeqRef.current) return
       lastSeqRef.current = next.seq
       setSnapshot(next)
+      setLastUpdatedAt(Date.now())
     }
 
     // Cold start: REST seed for an instant first paint, before the socket handshake.
@@ -65,7 +70,7 @@ export function QueueSocketProvider({ doctorId, children }: { doctorId: string; 
   }, [doctorId])
 
   return (
-    <QueueSocketContext.Provider value={{ snapshot, status, errorCode }}>
+    <QueueSocketContext.Provider value={{ snapshot, status, errorCode, lastUpdatedAt }}>
       {children}
     </QueueSocketContext.Provider>
   )

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   getAccessToken,
   setAccessToken,
@@ -8,6 +9,7 @@ import {
 } from '@/lib/api/client'
 import { logout as logoutApi } from '@/lib/api/auth'
 import { unregisterForPush } from '@/lib/notifications/registration'
+import { purgePersistedQueryCache } from '@/lib/query/persister'
 import { decodeJwtSub } from '@/lib/auth/jwt'
 import type { TokenPair } from '@/types/api'
 
@@ -28,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false)
   const [patientId, setPatientId] = useState<string | null>(null)
   const [bootstrapping, setBootstrapping] = useState(true)
+  const queryClient = useQueryClient()
 
   // Restore session from the stored refresh token once on app start.
   // `hydrateSession` dedupes concurrent calls internally, so StrictMode's
@@ -49,12 +52,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const login = useCallback((tokens: TokenPair) => {
-    setAccessToken(tokens.accessToken)
-    setRefreshToken(tokens.refreshToken)
-    setAuthenticated(true)
-    setPatientId(decodeJwtSub(tokens.accessToken))
-  }, [])
+  const login = useCallback(
+    (tokens: TokenPair) => {
+      // Start every session from a clean cache so a previous account's persisted PHI
+      // (e.g. after a forced logout that bypassed the graceful purge) can't surface
+      // for the new patient on a shared device.
+      queryClient.clear()
+      void purgePersistedQueryCache()
+      setAccessToken(tokens.accessToken)
+      setRefreshToken(tokens.refreshToken)
+      setAuthenticated(true)
+      setPatientId(decodeJwtSub(tokens.accessToken))
+    },
+    [queryClient],
+  )
 
   const logout = useCallback(async () => {
     // Unregister this device's push token first — DELETE /me/devices needs the
@@ -69,7 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearTokens()
     setAuthenticated(false)
     setPatientId(null)
-  }, [])
+    // Drop cached PHI (memory + persisted IndexedDB) so one patient's data can't
+    // surface for the next account on a shared device.
+    queryClient.clear()
+    await purgePersistedQueryCache()
+  }, [queryClient])
 
   return (
     <AuthContext.Provider

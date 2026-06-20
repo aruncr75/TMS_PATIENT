@@ -6,6 +6,7 @@ import { useMyToken } from '@/hooks/use-my-token'
 import { clearCheckInSession, readCheckInSession, type CheckInSession } from '@/hooks/use-checkin'
 import { PageHeader } from '@/components/layout/page-header'
 import { TokenDisplay } from '@/components/token-display'
+import { relativeMinutesLabel } from '@/lib/utils/relative-time'
 
 // Live queue tracker. Reads the stored check-in session (set at check-in) and, if
 // present, opens a doctor-scoped socket to follow the public board.
@@ -33,8 +34,18 @@ export default function QueueTrackPage() {
 }
 
 function QueueTracker({ session, onStale }: { session: CheckInSession; onStale: () => void }) {
-  const { snapshot, status } = useQueue()
+  const { snapshot, status, lastUpdatedAt } = useQueue()
   const me = useMyToken(snapshot, session)
+
+  // While disconnected we keep showing the last snapshot — tick every 30 s so the
+  // "as of N min ago" age advances without a live update.
+  const [, forceTick] = useState(0)
+  const disconnected = status === 'reconnecting' || status === 'error'
+  useEffect(() => {
+    if (!disconnected) return
+    const id = setInterval(() => forceTick((n) => n + 1), 30_000)
+    return () => clearInterval(id)
+  }, [disconnected])
 
   // Stale board (different day/doctor) → drop the session and fall back to the
   // not-checked-in view rather than tracking a stranger's token.
@@ -57,9 +68,10 @@ function QueueTracker({ session, onStale }: { session: CheckInSession; onStale: 
 
   return (
     <div className="space-y-5 p-4">
-      {(status === 'reconnecting' || status === 'error') && (
+      {disconnected && (
         <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-sm text-amber-700" role="status">
           {status === 'error' ? 'Connection problem — retrying…' : 'Reconnecting…'}
+          {lastUpdatedAt != null && ` · Showing position as of ${relativeMinutesLabel(lastUpdatedAt)}`}
         </p>
       )}
 

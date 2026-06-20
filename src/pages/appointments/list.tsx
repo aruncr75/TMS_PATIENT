@@ -3,16 +3,19 @@ import { Link } from 'react-router-dom'
 import { useAppointments } from '@/hooks/use-appointments'
 import { useResolvedSlots } from '@/hooks/use-slots'
 import { useDoctors } from '@/hooks/use-doctors'
+import { useOnline } from '@/hooks/use-online'
 import { isUpcoming } from '@/lib/appointments'
+import { relativeMinutesLabel } from '@/lib/utils/relative-time'
 import { PageHeader } from '@/components/layout/page-header'
 import { AppointmentCard } from '@/components/appointment-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { AppointmentView } from '@/types/api'
 
 export default function AppointmentsListPage() {
-  const { data: appointments, isPending, isError } = useAppointments()
+  const { data: appointments, isPending, isError, dataUpdatedAt } = useAppointments()
   const { data: doctors } = useDoctors()
   const { slotMap, resolveSlot } = useResolvedSlots(appointments)
+  const online = useOnline()
 
   const doctorNames = useMemo(() => {
     const m = new Map<string, string>()
@@ -37,6 +40,11 @@ export default function AppointmentsListPage() {
     <div>
       <PageHeader title="My Appointments" back={false} />
       <div className="space-y-6 p-4">
+        {!online && dataUpdatedAt > 0 && (appointments?.length ?? 0) > 0 && (
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-sm text-amber-700" role="status">
+            Showing saved data — as of {relativeMinutesLabel(dataUpdatedAt)}
+          </p>
+        )}
         {isPending ? (
           <div className="space-y-3">
             <Skeleton className="h-20 w-full" />
