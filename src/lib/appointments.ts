@@ -19,6 +19,13 @@ export function canReschedule(status: AppointmentStatus): boolean {
   return status === 'confirmed'
 }
 
+// Check-in is offered from `confirmed` (mirrors backend appointment-fsm check_in:
+// confirmed → checked_in). The backend still owns the real gate, including the
+// check-in window (§16.5) — this only shapes the UI's primary action.
+export function canCheckIn(status: AppointmentStatus): boolean {
+  return status === 'confirmed'
+}
+
 // Patient-facing reschedule limit. No patient-readable clinic-config endpoint
 // exists, so this mirrors the backend value via env (default 3, matching the
 // seed); the backend enforces the real limit (RESCHEDULE_LIMIT_REACHED).

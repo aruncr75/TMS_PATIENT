@@ -14,6 +14,8 @@ import AppointmentsListPage from '@/pages/appointments/list'
 import AppointmentDetailPage from '@/pages/appointments/detail'
 import CancelAppointmentPage from '@/pages/appointments/cancel'
 import ReschedulePage from '@/pages/appointments/reschedule'
+import CheckInPage from '@/pages/queue/checkin'
+import QueueTrackPage from '@/pages/queue/track'
 import { AuthGuard } from '@/lib/auth/auth-guard'
 import { AppShell } from '@/components/layout/app-shell'
 import { PageHeader } from '@/components/layout/page-header'
@@ -82,8 +84,8 @@ export default function App() {
           <Route path="/appointments/:id/reschedule" element={<ReschedulePage />} />
 
           {/* Queue */}
-          <Route path="/appointments/:id/checkin" element={<PlaceholderPage label="Check In — Phase 5" />} />
-          <Route path="/queue" element={<PlaceholderPage label="Queue Tracker — Phase 5" />} />
+          <Route path="/appointments/:id/checkin" element={<CheckInPage />} />
+          <Route path="/queue" element={<QueueTrackPage />} />
 
           {/* Waitlist */}
           <Route path="/waitlist" element={<PlaceholderPage label="Waitlist — Phase 6" />} />

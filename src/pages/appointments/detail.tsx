@@ -2,7 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAppointment } from '@/hooks/use-appointment'
 import { useDoctorSlotMap } from '@/hooks/use-slots'
 import { useDoctors } from '@/hooks/use-doctors'
-import { canCancel, canReschedule } from '@/lib/appointments'
+import { canCancel, canCheckIn, canReschedule } from '@/lib/appointments'
 import { formatDateTime } from '@/lib/utils/date'
 import { PageHeader } from '@/components/layout/page-header'
 import { StatusBadge } from '@/components/status-badge'
@@ -56,10 +56,27 @@ export default function AppointmentDetailPage() {
               </dl>
             </div>
 
-            {(canReschedule(appt.status) || canCancel(appt.status)) && (
+            {(canCheckIn(appt.status) ||
+              appt.status === 'checked_in' ||
+              canReschedule(appt.status) ||
+              canCancel(appt.status)) && (
               <div className="flex flex-col gap-3">
+                {canCheckIn(appt.status) && (
+                  <Button fullWidth onClick={() => navigate(`/appointments/${appt.id}/checkin`)}>
+                    Check in
+                  </Button>
+                )}
+                {appt.status === 'checked_in' && (
+                  <Button fullWidth onClick={() => navigate('/queue')}>
+                    View live queue
+                  </Button>
+                )}
                 {canReschedule(appt.status) && (
-                  <Button fullWidth onClick={() => navigate(`/appointments/${appt.id}/reschedule`)}>
+                  <Button
+                    variant={canCheckIn(appt.status) ? 'secondary' : 'primary'}
+                    fullWidth
+                    onClick={() => navigate(`/appointments/${appt.id}/reschedule`)}
+                  >
                     Reschedule
                   </Button>
                 )}
