@@ -192,6 +192,27 @@ export interface JoinWaitlistInput {
   consultationType?: 'free' | 'paid'
 }
 
+// ── Notifications / devices (Phase 7) ──────────────────────────────────────────
+// POST /me/devices body. `platform` is an optional, non-authoritative hint; a web
+// client always sends 'web'. Idempotent by token server-side (no idempotency key).
+export type DevicePlatform = 'android' | 'ios' | 'web'
+
+export interface RegisterDeviceInput {
+  token: string
+  platform?: DevicePlatform
+}
+
+// POST /me/devices → the device-token record id (ULID).
+export interface DeviceRegistration {
+  id: string
+}
+
+// PATCH /me/notification-preferences `{ optIn }` → `{ optIn }`. There is NO GET to
+// read this back, so the client mirrors the choice locally (see use-notifications).
+export interface NotificationPreference {
+  optIn: boolean
+}
+
 // ── Error envelope ────────────────────────────────────────────────────────────
 // Uniform backend error shape. Last-slot-race alternatives arrive here on a
 // SLOT_UNAVAILABLE error from confirm/reschedule — never on HoldResult.

@@ -245,7 +245,7 @@
 | `pages/notifications/settings.tsx` | Opt-in toggle, install PWA prompt, permission state display |
 | `components/install-prompt.tsx` | Android `beforeinstallprompt` / iOS manual A2HS instructions |
 
-**Foreground notification types handled:** `booking.confirmed`, `booking.reminder`, `queue.eta_update`, `queue.called`, `waitlist.offer`
+**Foreground notification types handled** (the ACTUAL `data.type` literals the backend sends — verified against `modules/notifications/notification-map.ts`; the earlier `booking.*`/`queue.*` names were wrong): `appointment.confirmed`, `appointment.reminder`, `appointment.cancelled`, `appointment.rescheduled`, `appointment.checked_in`, `consultation.now_serving`, `doctor.running_late`, `doctor.unavailable`, `waitlist.offer`. **All payloads are data-only** (no `notification` block), so background pushes must call `showNotification()` from the SW manually. Copy map: `lib/notifications/message-map.ts` (foreground) + `public/firebase-messaging-sw.js` (background).
 
 **Waitlist offer banner:** now also triggered by `waitlist.offer` foreground FCM message — polling from Phase 6 can be removed.
 

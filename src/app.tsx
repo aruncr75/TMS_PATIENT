@@ -18,18 +18,10 @@ import CheckInPage from '@/pages/queue/checkin'
 import QueueTrackPage from '@/pages/queue/track'
 import WaitlistListPage from '@/pages/waitlist/list'
 import WaitlistAcceptPage from '@/pages/waitlist/accept'
+import NotificationSettingsPage from '@/pages/notifications/settings'
 import { AuthGuard } from '@/lib/auth/auth-guard'
 import { AppShell } from '@/components/layout/app-shell'
 import { PageHeader } from '@/components/layout/page-header'
-
-function PlaceholderPage({ label }: { label: string }) {
-  return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-      <p className="text-lg font-semibold text-brand-700">{label}</p>
-      <p className="mt-1 text-sm text-gray-400">Coming in the roadmap phase</p>
-    </div>
-  )
-}
 
 // Minimal home: the bottom-tab nav (AppShell) now handles navigation. Profile,
 // including logout, lives on the Profile tab.
@@ -100,7 +92,7 @@ export default function App() {
           <Route path="/waitlist/:id/accept" element={<WaitlistAcceptPage />} />
 
           {/* Notifications */}
-          <Route path="/notifications" element={<PlaceholderPage label="Notification Settings — Phase 7" />} />
+          <Route path="/notifications" element={<NotificationSettingsPage />} />
         </Route>
       </Route>
 

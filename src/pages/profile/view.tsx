@@ -67,6 +67,16 @@ export default function ProfileViewPage() {
           </span>
         </Link>
 
+        <Link
+          to="/notifications"
+          className="flex items-center justify-between rounded-2xl bg-white p-5 shadow-sm hover:bg-gray-50"
+        >
+          <span className="font-medium text-gray-900">Notifications</span>
+          <span aria-hidden className="text-gray-400">
+            ›
+          </span>
+        </Link>
+
         <Button variant="secondary" fullWidth onClick={handleLogout}>
           Log out
         </Button>

@@ -7,6 +7,7 @@ import {
 } from '@/lib/api/waitlist'
 import { clearKey, getOrCreateKey } from '@/lib/idempotency'
 import { getApiError } from '@/lib/api/error'
+import { usePushActive } from '@/lib/notifications/push-status'
 import { appointmentsKey } from '@/hooks/use-appointments'
 import type {
   BookingConfirmationView,
@@ -36,15 +37,20 @@ export function findActiveOffer(
   return entries?.find((e) => isActiveOffer(e, now))
 }
 
-// The caller's waitlist entries. Until Phase 7 (FCM) the offer is surfaced by
-// polling: a promotion can arrive at any time while the tab is open, so refetch
-// every 30 s. This one query powers both the list page and the app-wide offer
-// banner — keep a single source of truth.
+// The caller's waitlist entries. This one query powers both the list page and the
+// app-wide offer banner — keep a single source of truth.
+//
+// Offer surfacing (Phase 7): when FCM push is the active delivery path, a
+// `waitlist.offer` message invalidates this query, so the 30 s poll is disabled. The
+// poll remains as a fallback whenever push is NOT active (permission denied,
+// unsupported browser, iOS not installed, or Firebase unconfigured) so a promotion
+// is never missed while the tab is open.
 export function useWaitlist() {
+  const pushActive = usePushActive()
   return useQuery({
     queryKey: waitlistKey,
     queryFn: listWaitlist,
-    refetchInterval: 30_000,
+    refetchInterval: pushActive ? false : 30_000,
   })
 }
 

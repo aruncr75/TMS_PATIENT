@@ -7,6 +7,7 @@ import {
   hydrateSession,
 } from '@/lib/api/client'
 import { logout as logoutApi } from '@/lib/api/auth'
+import { unregisterForPush } from '@/lib/notifications/registration'
 import { decodeJwtSub } from '@/lib/auth/jwt'
 import type { TokenPair } from '@/types/api'
 
@@ -56,6 +57,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(async () => {
+    // Unregister this device's push token first — DELETE /me/devices needs the
+    // bearer token, so it must run before clearTokens(). Best-effort: never block
+    // logout on it.
+    try {
+      await unregisterForPush()
+    } catch {
+      // ignore
+    }
     await logoutApi() // best-effort server-side revoke
     clearTokens()
     setAuthenticated(false)
