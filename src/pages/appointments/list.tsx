@@ -4,10 +4,12 @@ import { useAppointments } from '@/hooks/use-appointments'
 import { useResolvedSlots } from '@/hooks/use-slots'
 import { useDoctors } from '@/hooks/use-doctors'
 import { useOnline } from '@/hooks/use-online'
+import { useNow } from '@/hooks/use-now'
 import { isUpcoming } from '@/lib/appointments'
 import { relativeMinutesLabel } from '@/lib/utils/relative-time'
 import { PageHeader } from '@/components/layout/page-header'
 import { AppointmentCard } from '@/components/appointment-card'
+import { StaleBanner } from '@/components/ui/stale-banner'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { AppointmentView } from '@/types/api'
 
@@ -16,6 +18,8 @@ export default function AppointmentsListPage() {
   const { data: doctors } = useDoctors()
   const { slotMap, resolveSlot } = useResolvedSlots(appointments)
   const online = useOnline()
+  // Tick while offline so the "as of N min ago" age advances without a refetch.
+  const now = useNow(30_000, !online)
 
   const doctorNames = useMemo(() => {
     const m = new Map<string, string>()
@@ -40,10 +44,8 @@ export default function AppointmentsListPage() {
     <div>
       <PageHeader title="My Appointments" back={false} />
       <div className="space-y-6 p-4">
-        {!online && dataUpdatedAt > 0 && (appointments?.length ?? 0) > 0 && (
-          <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-sm text-amber-700" role="status">
-            Showing saved data — as of {relativeMinutesLabel(dataUpdatedAt)}
-          </p>
+        {!online && dataUpdatedAt > 0 && (
+          <StaleBanner>Showing saved data — as of {relativeMinutesLabel(dataUpdatedAt, now)}</StaleBanner>
         )}
         {isPending ? (
           <div className="space-y-3">

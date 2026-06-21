@@ -1,4 +1,5 @@
 import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
+import { purgePersistedQueryCache } from '@/lib/query/persister'
 
 export const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -50,6 +51,11 @@ api.interceptors.response.use(
         return api(config)
       } catch {
         clearTokens()
+        // The persisted cache holds PHI (appointments/queue). A forced logout must
+        // wipe it from IndexedDB too, or it would survive the reload below and be
+        // restorable on a shared device. Await so the delete commits before we
+        // navigate away.
+        await purgePersistedQueryCache()
         window.location.replace('/login')
         return Promise.reject(error)
       }
@@ -110,8 +116,17 @@ export function hydrateSession(): Promise<boolean> {
       // online request via the 401 interceptor above.
       if (isAuthRejection(err)) {
         clearTokens()
+        // Session was actively revoked — drop the persisted PHI cache too so a
+        // later offline reload can't restore and render the dead session's data.
+        void purgePersistedQueryCache()
         return false
       }
+      // Offline / 5xx: keep the session (offline-auth invariant). KNOWN RESIDUAL: an
+      // offline cold-open here restores persisted PHI with no verified identity, so on
+      // a shared device a different person could see the prior patient's data. Online
+      // de-auth purges (above + the 401 interceptor) wipe a revoked session once the
+      // device reconnects, but the purely-offline case is closed by the planned
+      // app-lock (PIN/biometric on cold open) — tracked as a separate task.
       return true
     }
   })().finally(() => {

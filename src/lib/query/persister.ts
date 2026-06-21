@@ -2,10 +2,11 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { get, set, del } from 'idb-keyval'
 
 // The React Query cache is persisted to IndexedDB (NOT localStorage) so the patient's
-// last-known appointments and queue survive an offline reload. IndexedDB is required
-// by the cross-cutting rule "never cache PHI in localStorage" (ROADMAP §17) —
-// appointment data is the patient's own PHI. The SW Cache Storage already holds the
-// raw /api responses, so this keeps the client's offline posture consistent.
+// last-known appointments and queue survive an offline reload. Storing it in IndexedDB
+// rather than localStorage satisfies the cross-cutting PHI rule "Never cache PHI in
+// localStorage" (ROADMAP.md → "Cross-cutting rules") — appointment data is the
+// patient's own PHI. The SW Cache Storage already holds the raw /api responses, so
+// this keeps the client's offline posture consistent.
 const IDB_KEY = 'tms-rq-cache'
 
 export const queryPersister = createAsyncStoragePersister({

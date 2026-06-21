@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import { QueueSocketProvider } from '@/lib/socket/socket-provider'
 import { useQueue } from '@/hooks/use-queue'
 import { useMyToken } from '@/hooks/use-my-token'
+import { useNow } from '@/hooks/use-now'
 import { clearCheckInSession, readCheckInSession, type CheckInSession } from '@/hooks/use-checkin'
 import { PageHeader } from '@/components/layout/page-header'
 import { TokenDisplay } from '@/components/token-display'
+import { StaleBanner } from '@/components/ui/stale-banner'
 import { relativeMinutesLabel } from '@/lib/utils/relative-time'
 
 // Live queue tracker. Reads the stored check-in session (set at check-in) and, if
@@ -39,13 +41,8 @@ function QueueTracker({ session, onStale }: { session: CheckInSession; onStale: 
 
   // While disconnected we keep showing the last snapshot — tick every 30 s so the
   // "as of N min ago" age advances without a live update.
-  const [, forceTick] = useState(0)
   const disconnected = status === 'reconnecting' || status === 'error'
-  useEffect(() => {
-    if (!disconnected) return
-    const id = setInterval(() => forceTick((n) => n + 1), 30_000)
-    return () => clearInterval(id)
-  }, [disconnected])
+  const now = useNow(30_000, disconnected)
 
   // Stale board (different day/doctor) → drop the session and fall back to the
   // not-checked-in view rather than tracking a stranger's token.
@@ -69,10 +66,10 @@ function QueueTracker({ session, onStale }: { session: CheckInSession; onStale: 
   return (
     <div className="space-y-5 p-4">
       {disconnected && (
-        <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-sm text-amber-700" role="status">
+        <StaleBanner>
           {status === 'error' ? 'Connection problem — retrying…' : 'Reconnecting…'}
-          {lastUpdatedAt != null && ` · Showing position as of ${relativeMinutesLabel(lastUpdatedAt)}`}
-        </p>
+          {lastUpdatedAt != null && ` · Showing position as of ${relativeMinutesLabel(lastUpdatedAt, now)}`}
+        </StaleBanner>
       )}
 
       {me.isServing ? (

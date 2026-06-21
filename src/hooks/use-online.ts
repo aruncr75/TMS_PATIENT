@@ -9,6 +9,9 @@ export function useOnline(): boolean {
   )
 
   useEffect(() => {
+    // Reconcile any connectivity flip that happened in the render→effect-commit
+    // window, before the listeners below were attached.
+    setOnline(navigator.onLine)
     const up = () => setOnline(true)
     const down = () => setOnline(false)
     window.addEventListener('online', up)

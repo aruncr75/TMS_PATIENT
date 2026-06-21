@@ -32,6 +32,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [bootstrapping, setBootstrapping] = useState(true)
   const queryClient = useQueryClient()
 
+  // Single source of truth for wiping a session's cached PHI — the in-memory query
+  // cache AND its persisted IndexedDB copy — so one patient's data can't surface for
+  // the next account on a shared device. Clearing in-memory FIRST is what makes this
+  // race-free: any persist write the cache subscription still fires now serializes an
+  // empty cache, and idb-keyval runs set/del in call order, so this del lands after
+  // (and thus wins over) any write already queued with the prior session's data.
+  const resetSessionCache = useCallback(async () => {
+    queryClient.clear()
+    await purgePersistedQueryCache()
+  }, [queryClient])
+
   // Restore session from the stored refresh token once on app start.
   // `hydrateSession` dedupes concurrent calls internally, so StrictMode's
   // double-mount cannot trigger a refresh-token-reuse family revocation.
@@ -57,14 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Start every session from a clean cache so a previous account's persisted PHI
       // (e.g. after a forced logout that bypassed the graceful purge) can't surface
       // for the new patient on a shared device.
-      queryClient.clear()
-      void purgePersistedQueryCache()
+      void resetSessionCache()
       setAccessToken(tokens.accessToken)
       setRefreshToken(tokens.refreshToken)
       setAuthenticated(true)
       setPatientId(decodeJwtSub(tokens.accessToken))
     },
-    [queryClient],
+    [resetSessionCache],
   )
 
   const logout = useCallback(async () => {
@@ -82,9 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPatientId(null)
     // Drop cached PHI (memory + persisted IndexedDB) so one patient's data can't
     // surface for the next account on a shared device.
-    queryClient.clear()
-    await purgePersistedQueryCache()
-  }, [queryClient])
+    await resetSessionCache()
+  }, [resetSessionCache])
 
   return (
     <AuthContext.Provider

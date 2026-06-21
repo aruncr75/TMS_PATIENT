@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 // Add-to-Home-Screen helper (Phase 7). Android/desktop Chrome fire
 // `beforeinstallprompt`, which we capture and replay from a button. iOS Safari has
@@ -68,23 +68,21 @@ export function InstallPrompt() {
   // iOS: manual install instructions (no programmatic prompt).
   if (isIos()) {
     return (
-      <div className="relative rounded-2xl bg-white p-5 shadow-sm">
-        <DismissButton onDismiss={dismiss} />
+      <PromptCard onDismiss={dismiss}>
         <p className="font-medium text-gray-900">Install this app for notifications</p>
         <p className="mt-1 text-sm text-gray-500">
           On iPhone or iPad, tap the <span className="font-semibold">Share</span> button, then{' '}
           <span className="font-semibold">Add to Home Screen</span>. Open the app from your Home
           Screen to enable push notifications.
         </p>
-      </div>
+      </PromptCard>
     )
   }
 
   // Android / desktop Chrome: replay the captured install prompt.
   if (deferred) {
     return (
-      <div className="relative rounded-2xl bg-white p-5 shadow-sm">
-        <DismissButton onDismiss={dismiss} />
+      <PromptCard onDismiss={dismiss}>
         <p className="font-medium text-gray-900">Install this app</p>
         <p className="mt-1 text-sm text-gray-500">
           Add it to your home screen for a faster, full-screen experience.
@@ -100,11 +98,22 @@ export function InstallPrompt() {
         >
           Install app
         </button>
-      </div>
+      </PromptCard>
     )
   }
 
   return null
+}
+
+// Shared card shell for both the iOS and Android/Chrome prompts — one place for the
+// surface styling and the dismiss affordance.
+function PromptCard({ onDismiss, children }: { onDismiss: () => void; children: ReactNode }) {
+  return (
+    <div className="relative rounded-2xl bg-white p-5 shadow-sm">
+      <DismissButton onDismiss={onDismiss} />
+      {children}
+    </div>
+  )
 }
 
 function DismissButton({ onDismiss }: { onDismiss: () => void }) {

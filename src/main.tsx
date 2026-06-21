@@ -49,8 +49,12 @@ createRoot(root).render(
         buster: CACHE_BUSTER,
         // Only persist completed (successful) queries — never errors or in-flight
         // state — so a cold offline reload restores real data, not failure shells.
+        // Never persist mutations: the default dehydrates *paused* (offline) ones,
+        // which would write request-body PHI to IndexedDB and, with no
+        // resumePausedMutations on restore, silently strand them.
         dehydrateOptions: {
           shouldDehydrateQuery: (query) => query.state.status === 'success',
+          shouldDehydrateMutation: () => false,
         },
       }}
     >
