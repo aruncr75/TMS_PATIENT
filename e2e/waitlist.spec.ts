@@ -1,7 +1,8 @@
 import { type APIRequestContext } from '@playwright/test'
 import { expect, test } from './support/fixtures'
 import { nextWeekendDate, patientContext, seededDoctorId } from './support/api'
-import { arrangeWaitlistOffer } from './support/waitlist'
+import { patientProfileId } from './support/auth'
+import { arrangeWaitlistOffer, clearWaitlist, joinWaitlistApi } from './support/waitlist'
 
 // Waitlist: join a fully-booked day (a weekend has zero slots → no bookable seat →
 // the join card appears) and accept a real promotion offer.
@@ -46,4 +47,18 @@ test('accepts an offered slot from the waitlist', async ({ page }) => {
 
   // Reuses the booking-success screen.
   await expect(page.getByText("You're booked")).toBeVisible()
+})
+
+test('leaves the waitlist (DELETE /waitlist/:id)', async ({ page }) => {
+  // Make our arranged entry the SOLE live card so the Leave button is unambiguous.
+  await clearWaitlist(await patientProfileId())
+  await joinWaitlistApi(ctx, doctorId, nextWeekendDate())
+
+  await page.goto('/waitlist')
+  await expect(page.getByText('Waiting').first()).toBeVisible()
+
+  await page.getByRole('button', { name: 'Leave waitlist' }).click()
+
+  // Entry dropped from the cache → the empty state replaces the card.
+  await expect(page.getByText("You're not on any waitlists")).toBeVisible()
 })

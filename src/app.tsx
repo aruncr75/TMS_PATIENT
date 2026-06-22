@@ -3,6 +3,7 @@ import LoginPage from '@/pages/auth/login'
 import VerifyOtpPage from '@/pages/auth/verify-otp'
 import ProfileViewPage from '@/pages/profile/view'
 import ProfileEditPage from '@/pages/profile/edit'
+import ChangePhonePage from '@/pages/profile/change-phone'
 import DependentsPage from '@/pages/profile/dependents'
 import AddDependentPage from '@/pages/profile/add-dependent'
 import EditDependentPage from '@/pages/profile/edit-dependent'
@@ -67,6 +68,7 @@ export default function App() {
           {/* Profile */}
           <Route path="/profile" element={<ProfileViewPage />} />
           <Route path="/profile/edit" element={<ProfileEditPage />} />
+          <Route path="/profile/phone" element={<ChangePhonePage />} />
           <Route path="/profile/dependents" element={<DependentsPage />} />
           <Route path="/profile/dependents/add" element={<AddDependentPage />} />
           <Route path="/profile/dependents/:id/edit" element={<EditDependentPage />} />

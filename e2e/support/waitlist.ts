@@ -56,6 +56,19 @@ export async function arrangeWaitlistOffer(patientCtx: APIRequestContext): Promi
   throw new Error('waitlist offer did not materialize after cancel')
 }
 
+/** Cancel every live (waiting/offered) waitlist entry for a patient, so a freshly
+ * arranged entry is the SOLE card on the list page (deterministic Leave-waitlist test). */
+export async function clearWaitlist(profileId: string): Promise<void> {
+  const sql = postgres(DATABASE_URL)
+  try {
+    await sql`
+      update waitlist_entries set status = 'cancelled', updated_at = now()
+       where patient_profile_id = ${profileId} and status in ('waiting', 'offered')`
+  } finally {
+    await sql.end({ timeout: 5 })
+  }
+}
+
 /** Join the waitlist directly via the API (used to assert the list UI without UI driving). */
 export async function joinWaitlistApi(
   patientCtx: APIRequestContext,

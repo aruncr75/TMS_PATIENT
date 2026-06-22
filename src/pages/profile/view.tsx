@@ -47,12 +47,20 @@ export default function ProfileViewPage() {
                   </span>
                 )}
               </div>
-              <Link
-                to="/profile/edit"
-                className="mt-4 inline-block text-sm font-medium text-brand-700 hover:underline"
-              >
-                Edit profile
-              </Link>
+              <div className="mt-4 flex gap-4">
+                <Link
+                  to="/profile/edit"
+                  className="inline-block text-sm font-medium text-brand-700 hover:underline"
+                >
+                  Edit profile
+                </Link>
+                <Link
+                  to="/profile/phone"
+                  className="inline-block text-sm font-medium text-brand-700 hover:underline"
+                >
+                  Change phone number
+                </Link>
+              </div>
             </>
           )}
         </section>

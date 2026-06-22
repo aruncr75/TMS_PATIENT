@@ -9,6 +9,14 @@ export const DATABASE_URL =
 /** Backend ORIGIN (no /api prefix) — REST + Socket.IO live here. */
 export const BACKEND_URL = process.env.E2E_BACKEND_URL ?? 'http://localhost:3000'
 
+/** Redis — for the OTP-injection seam (see support/otp.ts). Must match the backend's. */
+export const REDIS_URL = process.env.E2E_REDIS_URL ?? 'redis://127.0.0.1:6379'
+
+/** OTP hashing inputs — must mirror the backend (config/env.ts defaults; .env doesn't
+ *  override these locally). Lets the suite inject a known code into Redis. */
+export const OTP_PEPPER = process.env.E2E_OTP_PEPPER ?? 'dev-only-otp-pepper-change-me'
+export const OTP_TTL_SECONDS = Number(process.env.E2E_OTP_TTL_SECONDS ?? 300)
+
 /** The app under test (vite dev). The offline project overrides this to preview. */
 export const APP_ORIGIN = process.env.E2E_APP_ORIGIN ?? 'http://localhost:5173'
 

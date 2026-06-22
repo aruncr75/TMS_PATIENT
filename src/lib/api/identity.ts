@@ -20,6 +20,21 @@ export async function updateProfile(input: UpdateProfileInput): Promise<ProfileV
   return data
 }
 
+// ── Phone change (OTP-gated, §14.6) ─────────────────────────────────────────────
+// These live under /auth/* but are AUTHENTICATED (the actor is taken from the token,
+// never the body), so they use the `api` instance — not `publicApi`. The OTP is sent
+// to the NEW number; confirm swaps the phone after a version CAS server-side.
+export async function requestPhoneChange(newPhone: string): Promise<{ status: string }> {
+  const { data } = await api.post<{ status: string }>('/auth/patient/phone-change/request', {
+    newPhone,
+  })
+  return data
+}
+
+export async function confirmPhoneChange(newPhone: string, code: string): Promise<void> {
+  await api.post('/auth/patient/phone-change/confirm', { newPhone, code })
+}
+
 // ── Dependents ──────────────────────────────────────────────────────────────
 export interface CreateDependentInput {
   fullName: string // required, 1–200

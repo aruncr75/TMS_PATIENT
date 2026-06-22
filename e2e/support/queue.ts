@@ -25,6 +25,32 @@ export async function clearQueueDb(doctorId: string, serviceDate: string): Promi
   }
 }
 
+/** Shift a slot's start to NOW so a confirmed appointment falls inside the check-in
+ *  window (start − window ≤ now ≤ start + grace). Lets us drive the self check-in
+ *  happy path against real seeded slots, which are never naturally in-window. */
+export async function shiftSlotToNow(slotId: string): Promise<void> {
+  const sql = postgres(DATABASE_URL)
+  try {
+    await sql`update slots set start_at = now(), updated_at = now() where id = ${slotId}`
+  } finally {
+    await sql.end({ timeout: 5 })
+  }
+}
+
+/** Declare (or clear, with 0) the doctor's running-late delay for today. Folds into the
+ *  read-time ETA the patient board shows. Staff/admin only (availability.manage). */
+export async function reportRunningLate(
+  staffCtx: APIRequestContext,
+  doctorId: string,
+  delayMinutes: number,
+): Promise<void> {
+  const res = await staffCtx.post(`/doctors/${doctorId}/running-late`, {
+    headers: { 'idempotency-key': randomUUID() },
+    data: { delayMinutes },
+  })
+  if (!res.ok()) throw new Error(`running-late failed: ${res.status()} ${await res.text()}`)
+}
+
 /** Issue a walk-in token for the doctor (no appointment, no check-in window). */
 export async function walkIn(staffCtx: APIRequestContext, doctorId: string): Promise<CheckInView> {
   const res = await staffCtx.post('/walk-ins', {

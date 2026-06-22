@@ -1,5 +1,6 @@
 import { expect, test as anonTest } from '@playwright/test'
 import { test } from './support/fixtures'
+import { injectOtp, uniquePhone } from './support/otp'
 
 // The OTP happy-path can't be automated (the code is a one-way HMAC in Redis), so the
 // authenticated session is bootstrapped via the refresh-token seam (fixtures.ts).
@@ -46,5 +47,34 @@ anonTest.describe('login + verify UI (unauthenticated)', () => {
 
     await expect(page.getByText(/invalid or expired/i)).toBeVisible()
     await expect(page).toHaveURL(/\/verify$/) // surfaced inline, no redirect
+  })
+
+  test('logs in through the OTP happy path (real backend)', async ({ page }) => {
+    // A fresh phone → verify AUTO-REGISTERS the patient. The code is planted in Redis
+    // (one-way HMAC, can't be read back) so the real /auth/patient/otp/verify succeeds.
+    const phone = uniquePhone()
+
+    // Stub ONLY the request: backend/.env carries live Twilio creds, so a real send to a
+    // test number throws. The VERIFY still hits the backend and validates our planted code.
+    await page.route('**/auth/patient/otp/request', (route) =>
+      route.fulfill({
+        status: 202,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'sent' }),
+      }),
+    )
+
+    await page.goto('/login')
+    await page.getByLabel('Phone number').fill(phone)
+    await page.getByRole('button', { name: 'Send code' }).click()
+
+    await expect(page.getByRole('heading', { name: 'Enter code' })).toBeVisible()
+    await injectOtp('login', phone, '000000')
+    await page.getByLabel('Digit 1').click()
+    await page.keyboard.type('000000')
+
+    // Authenticated session minted → AuthGuard lets us onto Home.
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByRole('link', { name: 'Book an appointment' })).toBeVisible()
   })
 })
