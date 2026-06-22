@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@tanstack/query-async-storage-persister": "^5.80.7",
@@ -23,13 +25,16 @@
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@tailwindcss/vite": "^4.1.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
+    "postgres": "^3.4.9",
+    "tailwindcss": "^4.1.10",
     "typescript": "^5.8.3",
+    "ulid": "^3.0.2",
     "vite": "^6.3.5",
-    "vite-plugin-pwa": "^0.21.1",
-    "@tailwindcss/vite": "^4.1.10",
-    "tailwindcss": "^4.1.10"
+    "vite-plugin-pwa": "^0.21.1"
   }
 }

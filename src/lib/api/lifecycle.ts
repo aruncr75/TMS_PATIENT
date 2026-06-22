@@ -10,7 +10,12 @@ export async function cancelAppointment(
   id: string,
   idempotencyKey: string,
 ): Promise<CancellationView> {
-  const { data } = await api.post<CancellationView>(`/appointments/${id}/cancel`, null, {
+  // Body is `{}` (not `null`): the `api` instance defaults Content-Type to
+  // application/json, so a `null` body serializes to the string "null", which the
+  // backend's strict JSON parser rejects with a 400 ("Unrecognized token 'n'"). This
+  // endpoint ignores the body; the idempotency key rides in the header. (Same fix as
+  // check-in / waitlist-accept — cancel had the identical latent bug.)
+  const { data } = await api.post<CancellationView>(`/appointments/${id}/cancel`, {}, {
     headers: { 'idempotency-key': idempotencyKey },
   })
   return data
