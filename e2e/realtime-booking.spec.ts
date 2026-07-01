@@ -1,6 +1,6 @@
 import { type APIRequestContext } from '@playwright/test'
 import { expect, test } from './support/fixtures'
-import { findOpenSlotDay, patientContext, seededDoctorId } from './support/api'
+import { findOpenSlotDay, patientContext, seededDoctorId, staffContext } from './support/api'
 import { mintRefreshToken, storageStateFor } from './support/auth'
 
 let ctx: APIRequestContext
@@ -17,9 +17,16 @@ test.afterAll(async () => {
   await ctx?.dispose()
 })
 
-test('real-time slot locking blocks concurrent bookings', async ({ page, browser }) => {
+test('real-time slot locking blocks concurrent bookings and unholds on expiry', async ({ page, browser }) => {
   page.on('console', msg => console.log('Page A:', msg.text()))
   page.on('pageerror', err => console.log('Page A Error:', err.message))
+
+  // 1. Temporarily reduce hold TTL to 2 seconds for this test
+  const adminCtx = await staffContext()
+  const configRes = await adminCtx.get('/admin/clinic-config')
+  const originalConfig = await configRes.json()
+  await adminCtx.put('/admin/clinic-config', { data: { ...originalConfig, holdTtlSeconds: 2 } })
+  await adminCtx.dispose()
 
   // User A (default page)
   await page.goto('/')
@@ -68,6 +75,16 @@ test('real-time slot locking blocks concurrent bookings', async ({ page, browser
   const lockIcon = slotB.locator('svg')
   await expect(lockIcon).toBeVisible()
 
+  // 4. Wait for TTL to expire (2 seconds + margin)
+  // User B should see the slot become enabled and available again
+  await expect(slotB).toBeEnabled({ timeout: 10000 })
+  await expect(slotB).not.toHaveClass(/border-amber-400/)
+
   // Cleanup context
   await contextB.close()
+
+  // 5. Restore original config
+  const adminCtxRestore = await staffContext()
+  await adminCtxRestore.put('/admin/clinic-config', { data: originalConfig })
+  await adminCtxRestore.dispose()
 })
