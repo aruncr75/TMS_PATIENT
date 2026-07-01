@@ -30,6 +30,10 @@ export async function holdSlot(slotId: string): Promise<HoldResult> {
   return data
 }
 
+export async function releaseHold(slotId: string, holdId: string): Promise<void> {
+  await api.delete(`/appointments/holds/${slotId}/${holdId}`)
+}
+
 // ── Confirm ───────────────────────────────────────────────────────────────────
 export interface ConfirmBookingInput {
   slotId: string

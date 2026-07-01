@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAvailability } from '@/hooks/use-availability'
 import { useHold } from '@/hooks/use-booking'
 import { getApiError } from '@/lib/api/error'
+import { getActiveHold, clearActiveHold } from '@/lib/active-hold'
 import { todayInClinicTz } from '@/lib/utils/date'
 import { useToast } from '@/components/ui/toast'
 import { PageHeader } from '@/components/layout/page-header'
@@ -13,18 +14,27 @@ import type { SlotOption } from '@/types/api'
 import { BookingSocketProvider, useBookingSocket } from '@/lib/socket/booking-socket-provider'
 
 function ConnectedSlotGrid({ slots, onSelect, pending }: { slots: SlotOption[], onSelect: (slot: SlotOption) => void, pending: boolean }) {
-  const { isHeldByOthers, status } = useBookingSocket()
+  const { isHeldByOthers, getSlotState, status } = useBookingSocket()
   
   const heldSlotIds = new Set<string>()
+  const visibleSlots: SlotOption[] = []
+
   for (const slot of slots) {
+    const state = getSlotState(slot.slotId)
+    // If the real-time state says it's fully booked, hide it completely
+    if (state && state.bookedCount >= state.capacity) {
+      continue
+    }
+
     if (isHeldByOthers(slot.slotId)) {
       heldSlotIds.add(slot.slotId)
     }
+    visibleSlots.push(slot)
   }
 
   return (
     <div data-socket-status={status}>
-      <SlotGrid slots={slots} onSelect={onSelect} pending={pending} heldSlotIds={heldSlotIds} />
+      <SlotGrid slots={visibleSlots} onSelect={onSelect} pending={pending} heldSlotIds={heldSlotIds} />
     </div>
   )
 }
@@ -35,13 +45,30 @@ export default function SlotPickerPage() {
   const { show } = useToast()
 
   const today = todayInClinicTz()
-  const [date, setDate] = useState(today)
+  // If the user navigated back from confirm, open on the day they were looking at
+  const [date, setDate] = useState(() => getActiveHold()?.clinicDate ?? today)
 
   const { data: slots, isPending, isError, isFetching } = useAvailability(doctorId, date)
-  const hold = useHold()
+  const hold = useHold(doctorId, date)
+
+  // When returning to the picker grid from the confirm page (e.g. clicking Back),
+  // instantly release any lingering hold so the slot frees up for others.
+  // We do this on mount of the picker rather than unmount of the confirm page
+  // to avoid React 18 StrictMode instantly releasing holds before confirmation.
+  useEffect(() => {
+    clearActiveHold()
+  }, [])
 
   const handleSelect = (slot: SlotOption) => {
     if (!doctorId) return
+    
+    // If the user clicks a DIFFERENT slot, release their current hold first
+    // to prevent hoarding slots and locking themselves out.
+    const current = getActiveHold()
+    if (current && current.slotId !== slot.slotId) {
+      clearActiveHold()
+    }
+
     hold.mutate(slot.slotId, {
       onSuccess: (holdResult) => {
         navigate(`/book/${doctorId}/confirm`, { state: { hold: holdResult, slot } })
@@ -73,7 +100,10 @@ export default function SlotPickerPage() {
             type="date"
             value={date}
             min={today}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => {
+              clearActiveHold()
+              setDate(e.target.value)
+            }}
             className="rounded-xl border border-gray-300 px-4 py-3 text-base text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
           />
         </div>

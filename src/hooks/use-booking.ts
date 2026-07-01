@@ -3,14 +3,20 @@ import { confirmBooking, holdSlot, type ConfirmBookingInput } from '@/lib/api/bo
 import { clearKey, getOrCreateKey } from '@/lib/idempotency'
 import { getApiError } from '@/lib/api/error'
 import type { BookingConfirmationView } from '@/types/api'
+import { setActiveHold, clearActiveHold } from '@/lib/active-hold'
 
 // Hold a slot (Phase 3). Holding never enforces scarcity and never returns
 // alternatives — that happens at confirm. Mutations don't auto-retry (the global
 // retry config only covers queries), so a 429/HOLD_CAP_EXCEEDED surfaces to the
 // caller to message.
-export function useHold() {
+export function useHold(doctorId?: string, clinicDate?: string) {
   return useMutation({
     mutationFn: (slotId: string) => holdSlot(slotId),
+    onSuccess: (holdResult) => {
+      if (doctorId && clinicDate) {
+        setActiveHold({ ...holdResult, doctorId, clinicDate })
+      }
+    }
   })
 }
 
@@ -46,6 +52,8 @@ export function useConfirmBooking() {
     onSuccess: (_data, input) => {
       // Confirmed success: retire the key so a later identical booking gets a new one.
       clearKey(confirmOp(input))
+      // Clear the active hold now that it's consumed
+      clearActiveHold()
       // Keep Phase 4's appointment list fresh.
       void qc.invalidateQueries({ queryKey: ['appointments'] })
     },

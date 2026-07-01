@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-
+import { getActiveHold } from '@/lib/active-hold'
 import { createBookingSocket, type BookingConnectionStatus } from './booking-socket'
 
 interface SlotHoldState {
@@ -94,7 +94,25 @@ export function BookingSocketProvider({
     if (slotId === selectedSlotId) return false // Handled by selected styling
     const state = holdMap[slotId]
     if (!state) return false
+    
     const remaining = state.capacity - state.bookedCount
+    
+    // Strict evaluation order:
+    // 1. If it's literally sold out, lock it immediately regardless of holds.
+    if (remaining <= 0) return true
+    
+    // 2. If we are currently holding this slot (locally verified), don't lock us out of our own hold.
+    const activeHold = getActiveHold()
+    if (
+      activeHold &&
+      activeHold.slotId === slotId &&
+      activeHold.doctorId === doctorId &&
+      activeHold.clinicDate === date
+    ) {
+      return false
+    }
+    
+    // 3. Otherwise, apply standard lock if other people's holds consume the remaining capacity.
     return state.heldCount >= remaining
   }
 

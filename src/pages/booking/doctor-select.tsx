@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { clearActiveHold } from '@/lib/active-hold'
 import { useDoctors } from '@/hooks/use-doctors'
 import { PageHeader } from '@/components/layout/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -6,6 +8,11 @@ import { Skeleton } from '@/components/ui/skeleton'
 export default function DoctorSelectPage() {
   const { data: doctors, isPending, isError } = useDoctors()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    // If the user returns to the directory, they've abandoned the booking flow
+    clearActiveHold()
+  }, [])
 
   return (
     <div>
