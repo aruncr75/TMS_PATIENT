@@ -13,3 +13,23 @@ export interface ServerToClientEvents {
 
 // No client→server events on the queue namespace in v1.
 export type ClientToServerEvents = Record<string, never>
+
+// --- Booking Namespace ---
+
+export interface SlotHoldUpdate {
+  doctorId: string
+  clinicDate: string
+  slotId: string
+  heldCount: number
+  bookedCount: number
+  capacity: number
+  version: number
+}
+
+export interface BookingServerToClientEvents {
+  'slot:hold-update': (update: SlotHoldUpdate) => void
+  'slot:snapshot': (updates: SlotHoldUpdate[]) => void
+  'slot:error': (err: { code: string }) => void
+}
+
+export type BookingClientToServerEvents = Record<string, never>

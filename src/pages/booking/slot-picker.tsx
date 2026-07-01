@@ -10,6 +10,24 @@ import { SlotGrid } from '@/components/slot-grid'
 import { WaitlistJoinCard } from '@/components/waitlist-join-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { SlotOption } from '@/types/api'
+import { BookingSocketProvider, useBookingSocket } from '@/lib/socket/booking-socket-provider'
+
+function ConnectedSlotGrid({ slots, onSelect, pending }: { slots: SlotOption[], onSelect: (slot: SlotOption) => void, pending: boolean }) {
+  const { isHeldByOthers, status } = useBookingSocket()
+  
+  const heldSlotIds = new Set<string>()
+  for (const slot of slots) {
+    if (isHeldByOthers(slot.slotId)) {
+      heldSlotIds.add(slot.slotId)
+    }
+  }
+
+  return (
+    <div data-socket-status={status}>
+      <SlotGrid slots={slots} onSelect={onSelect} pending={pending} heldSlotIds={heldSlotIds} />
+    </div>
+  )
+}
 
 export default function SlotPickerPage() {
   const { doctorId } = useParams<{ doctorId: string }>()
@@ -69,11 +87,13 @@ export default function SlotPickerPage() {
         ) : (slots?.length ?? 0) === 0 && doctorId ? (
           // Fully booked day → offer the waitlist instead of an empty grid.
           <WaitlistJoinCard doctorId={doctorId} date={date} />
-        ) : (
-          <div className={isFetching ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
-            <SlotGrid slots={slots ?? []} onSelect={handleSelect} pending={hold.isPending} />
-          </div>
-        )}
+        ) : doctorId ? (
+          <BookingSocketProvider doctorId={doctorId} date={date}>
+            <div className={isFetching ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
+              <ConnectedSlotGrid slots={slots ?? []} onSelect={handleSelect} pending={hold.isPending} />
+            </div>
+          </BookingSocketProvider>
+        ) : null}
       </div>
     </div>
   )
