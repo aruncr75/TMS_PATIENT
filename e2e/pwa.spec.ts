@@ -10,6 +10,7 @@ test.describe('Progressive Web App (PWA) & Install Prompt', () => {
     // Check PWA HTML metadata tags
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#1d4ed8')
     await expect(page.locator('meta[name="viewport"]')).toHaveAttribute('content', 'width=device-width, initial-scale=1.0')
+    await expect(page.locator('meta[name="mobile-web-app-capable"]')).toHaveAttribute('content', 'yes')
     await expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).toHaveAttribute('content', 'yes')
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', '/icons/icon-192.png')
 

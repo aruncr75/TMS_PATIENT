@@ -3,7 +3,7 @@ import type { AppointmentStatus } from '@/types/api'
 // FSM state → label + colour. Class strings are LITERAL (not built dynamically):
 // Tailwind v4 only emits classes it can see verbatim in source, so a computed
 // `bg-status-${s}` would silently vanish at build.
-const STATUS_STYLES: Record<AppointmentStatus, { label: string; className: string }> = {
+const STATUS_STYLES: Record<string, { label: string; className: string }> = {
   requested: { label: 'Requested', className: 'bg-gray-100 text-gray-600' },
   confirmed: { label: 'Confirmed', className: 'bg-status-confirmed/10 text-status-confirmed' },
   checked_in: { label: 'Checked in', className: 'bg-status-checked-in/10 text-status-checked-in' },
@@ -18,15 +18,29 @@ const STATUS_STYLES: Record<AppointmentStatus, { label: string; className: strin
     label: 'Rescheduled',
     className: 'bg-status-rescheduled/10 text-status-rescheduled',
   },
+  waiting: { label: 'Waiting', className: 'bg-amber-50 text-amber-700' },
+  promoted: { label: 'Promoted', className: 'bg-emerald-50 text-emerald-700' },
+  offered: { label: 'Offered', className: 'bg-blue-50 text-blue-700' },
+  expired: { label: 'Expired', className: 'bg-gray-100 text-gray-500' },
 }
 
-export function StatusBadge({ status }: { status: AppointmentStatus }) {
-  const { label, className } = STATUS_STYLES[status]
+function formatFallback(raw?: string): string {
+  if (!raw) return 'Unknown'
+  return raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+export function StatusBadge({ status }: { status?: AppointmentStatus | string | null }) {
+  const key = (status ?? '').toLowerCase()
+  const style = STATUS_STYLES[key] ?? {
+    label: formatFallback(status ?? undefined),
+    className: 'bg-gray-100 text-gray-600',
+  }
+
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${className}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${style.className}`}
     >
-      {label}
+      {style.label}
     </span>
   )
 }
