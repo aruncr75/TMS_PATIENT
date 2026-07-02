@@ -14,6 +14,7 @@ node_modules/.tmp/
 # Build output
 dist/
 dist-ssr/
+dev-dist/
 
 # Local env files (keep the example committed)
 .env

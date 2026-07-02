@@ -20,11 +20,9 @@ export function AppShell() {
       <div className="mx-auto max-w-md pb-24">
         <OfflineBanner />
         <WaitlistOfferBanner />
-        <div className="p-4 pb-0">
-          <InstallPrompt />
-        </div>
         <Outlet />
       </div>
+      <InstallPrompt />
       <BottomNav />
     </div>
   )
