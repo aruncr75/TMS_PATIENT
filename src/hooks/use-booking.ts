@@ -4,17 +4,19 @@ import { clearKey, getOrCreateKey } from '@/lib/idempotency'
 import { getApiError } from '@/lib/api/error'
 import type { BookingConfirmationView } from '@/types/api'
 import { setActiveHold, clearActiveHold } from '@/lib/active-hold'
+import { useAuth } from '@/lib/auth/auth-context'
 
 // Hold a slot (Phase 3). Holding never enforces scarcity and never returns
 // alternatives — that happens at confirm. Mutations don't auto-retry (the global
 // retry config only covers queries), so a 429/HOLD_CAP_EXCEEDED surfaces to the
 // caller to message.
 export function useHold(doctorId?: string, clinicDate?: string) {
+  const { patientId } = useAuth()
   return useMutation({
     mutationFn: (slotId: string) => holdSlot(slotId),
     onSuccess: (holdResult) => {
       if (doctorId && clinicDate) {
-        setActiveHold({ ...holdResult, doctorId, clinicDate })
+        setActiveHold({ ...holdResult, doctorId, clinicDate, patientId })
       }
     }
   })

@@ -6,6 +6,7 @@ export const ACTIVE_HOLD_KEY = 'tms_active_hold'
 export interface ActiveHold extends HoldResult {
   doctorId: string
   clinicDate: string
+  patientId?: string | null
 }
 
 export function setActiveHold(hold: ActiveHold): void {

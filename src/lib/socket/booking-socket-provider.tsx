@@ -43,16 +43,17 @@ export function BookingSocketProvider({
     if (!doctorId || !date) return
 
     let mounted = true
+    versionsRef.current = {}
 
     const socket = createBookingSocket(doctorId, date, {
       onStatus: (s) => mounted && setStatus(s),
       onError: (code) => console.error('Booking socket error:', code),
       onSnapshot: (updates) => {
         if (!mounted) return
-        setHoldMap((prev) => {
-          const next = { ...prev }
+        versionsRef.current = {}
+        setHoldMap(() => {
+          const next: Record<string, SlotHoldState> = {}
           for (const u of updates) {
-            // Overwrite state completely from snapshot (which is the source of truth)
             next[u.slotId] = {
               heldCount: u.heldCount,
               bookedCount: u.bookedCount,
@@ -101,7 +102,7 @@ export function BookingSocketProvider({
     // 1. If it's literally sold out, lock it immediately regardless of holds.
     if (remaining <= 0) return true
     
-    // 2. If we are currently holding this slot (locally verified), don't lock us out of our own hold.
+    // 2. If we are currently holding this slot (locally verified in this session), don't lock us out of our own hold.
     const activeHold = getActiveHold()
     if (
       activeHold &&

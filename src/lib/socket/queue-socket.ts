@@ -2,9 +2,22 @@ import { io, type Socket } from 'socket.io-client'
 import type { ClientToServerEvents, ServerToClientEvents } from '@/types/socket'
 import type { QueueSnapshot } from '@/types/api'
 
-// Backend origin for the realtime queue. The Vite `/api` proxy does NOT cover the
-// socket, so we connect to VITE_WS_URL directly at the default `/socket.io` path.
-const WS_URL = import.meta.env.VITE_WS_URL ?? 'http://localhost:3000'
+function getWsUrl(): string {
+  if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location
+    if (import.meta.env.VITE_API_URL) {
+      try {
+        const url = new URL(import.meta.env.VITE_API_URL, window.location.origin)
+        return url.origin
+      } catch {}
+    }
+    return `${protocol}//${hostname}:3000`
+  }
+  return 'http://localhost:3000'
+}
+
+const WS_URL = getWsUrl()
 
 export type QueueConnectionStatus = 'connecting' | 'live' | 'reconnecting' | 'error'
 

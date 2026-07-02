@@ -80,7 +80,9 @@ export default function SlotPickerPage() {
             ? 'You have too many slots on hold — confirm one or wait a few minutes.'
             : apiErr.code === 'SLOT_FULL'
               ? 'That slot just filled up. Pick another.'
-              : apiErr.message,
+              : apiErr.code === 'SLOT_HELD'
+                ? 'That slot is temporarily held. Pick another or try again shortly.'
+                : apiErr.message,
           'error',
         )
       },

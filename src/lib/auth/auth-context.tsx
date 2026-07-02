@@ -11,6 +11,7 @@ import { logout as logoutApi } from '@/lib/api/auth'
 import { unregisterForPush } from '@/lib/notifications/registration'
 import { purgePersistedQueryCache } from '@/lib/query/persister'
 import { decodeJwtSub } from '@/lib/auth/jwt'
+import { clearActiveHold } from '@/lib/active-hold'
 import type { TokenPair } from '@/types/api'
 
 interface AuthContextValue {
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Start every session from a clean cache so a previous account's persisted PHI
       // (e.g. after a forced logout that bypassed the graceful purge) can't surface
       // for the new patient on a shared device.
+      clearActiveHold()
       void resetSessionCache()
       setAccessToken(tokens.accessToken)
       setRefreshToken(tokens.refreshToken)
@@ -78,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const logout = useCallback(async () => {
+    clearActiveHold()
     // Unregister this device's push token first — DELETE /me/devices needs the
     // bearer token, so it must run before clearTokens(). Best-effort: never block
     // logout on it.
