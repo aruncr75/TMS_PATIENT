@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import { WaitlistOfferBanner } from '@/components/waitlist-offer-banner'
 import { OfflineBanner } from '@/components/offline-banner'
+import { InstallPrompt } from '@/components/install-prompt'
 import { useNotificationsBootstrap } from '@/hooks/use-notifications'
 
 // Authenticated layout: an app-wide waitlist offer banner, the page content (with
@@ -19,6 +20,9 @@ export function AppShell() {
       <div className="mx-auto max-w-md pb-24">
         <OfflineBanner />
         <WaitlistOfferBanner />
+        <div className="p-4 pb-0">
+          <InstallPrompt />
+        </div>
         <Outlet />
       </div>
       <BottomNav />
