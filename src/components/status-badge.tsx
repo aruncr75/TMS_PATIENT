@@ -6,6 +6,8 @@ import type { AppointmentStatus } from '@/types/api'
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
   requested: { label: 'Requested', className: 'bg-gray-100 text-gray-600' },
   confirmed: { label: 'Confirmed', className: 'bg-status-confirmed/10 text-status-confirmed' },
+  arrived: { label: 'Arrived (Holding)', className: 'bg-indigo-50 text-indigo-700 border border-indigo-200' },
+  checked_in_pending_ack: { label: 'Confirm Presence', className: 'bg-amber-100 text-amber-800 animate-pulse' },
   checked_in: { label: 'Checked in', className: 'bg-status-checked-in/10 text-status-checked-in' },
   in_progress: {
     label: 'In progress',

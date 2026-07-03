@@ -40,6 +40,8 @@ export interface DoctorCardView {
 export type AppointmentStatus =
   | 'requested'
   | 'confirmed'
+  | 'arrived'
+  | 'checked_in_pending_ack'
   | 'checked_in'
   | 'in_progress'
   | 'completed'
