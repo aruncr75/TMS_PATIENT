@@ -1,32 +1,88 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { QueueSocketProvider } from '@/lib/socket/socket-provider'
 import { useQueue } from '@/hooks/use-queue'
 import { useMyToken } from '@/hooks/use-my-token'
 import { useNow } from '@/hooks/use-now'
-import { clearCheckInSession, readCheckInSession, type CheckInSession } from '@/hooks/use-checkin'
+import { clearCheckInSession, readAllCheckInSessions, readCheckInSession, type CheckInSession } from '@/hooks/use-checkin'
 import { PageHeader } from '@/components/layout/page-header'
 import { TokenDisplay } from '@/components/token-display'
 import { StaleBanner } from '@/components/ui/stale-banner'
 import { relativeMinutesLabel } from '@/lib/utils/relative-time'
 
-// Live queue tracker. Reads the stored check-in session (set at check-in) and, if
+// Live queue tracker. Reads stored check-in sessions (set at check-in) and, if
 // present, opens a doctor-scoped socket to follow the public board.
 export default function QueueTrackPage() {
-  // Lazy initializer keeps the session object identity stable across renders.
-  const [session, setSession] = useState<CheckInSession | null>(readCheckInSession)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const targetApptId = searchParams.get('appointmentId')
+
+  const [allSessions, setAllSessions] = useState<Record<string, CheckInSession>>(readAllCheckInSessions)
+  const sessionList = Object.values(allSessions)
+
+  const [selectedKey, setSelectedKey] = useState<string | null>(() => {
+    if (targetApptId && allSessions[targetApptId]) return targetApptId
+    const initial = readCheckInSession()
+    return initial ? (initial.appointmentId ?? initial.queueEntryId) : null
+  })
+
+  useEffect(() => {
+    if (targetApptId && allSessions[targetApptId]) {
+      setSelectedKey(targetApptId)
+    }
+  }, [targetApptId, allSessions])
+
+  const activeSession = selectedKey ? (allSessions[selectedKey] ?? readCheckInSession()) : readCheckInSession()
 
   const handleStale = useCallback(() => {
-    clearCheckInSession()
-    setSession(null)
-  }, [])
+    if (activeSession) {
+      const key = activeSession.appointmentId ?? activeSession.queueEntryId
+      clearCheckInSession(key)
+    } else {
+      clearCheckInSession()
+    }
+    const updated = readAllCheckInSessions()
+    setAllSessions(updated)
+    const remaining = Object.values(updated)
+    setSelectedKey(remaining.length > 0 ? (remaining[remaining.length - 1].appointmentId ?? remaining[remaining.length - 1].queueEntryId) : null)
+  }, [activeSession])
+
+  const activeKey = activeSession ? (activeSession.appointmentId ?? activeSession.queueEntryId) : null
 
   return (
     <div>
       <PageHeader title="Live queue" back={false} />
-      {session ? (
-        <QueueSocketProvider doctorId={session.doctorId}>
-          <QueueTracker session={session} onStale={handleStale} />
+      {sessionList.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto px-4 pt-3 pb-1">
+          {sessionList.map((s) => {
+            const k = s.appointmentId ?? s.queueEntryId
+            const isSelected = k === activeKey
+            return (
+              <button
+                key={k}
+                type="button"
+                onClick={() => {
+                  setSelectedKey(k)
+                  if (s.appointmentId) {
+                    setSearchParams({ appointmentId: s.appointmentId })
+                  } else {
+                    setSearchParams({})
+                  }
+                }}
+                className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  isSelected
+                    ? 'bg-brand-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Token #{s.tokenNumber}
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {activeSession ? (
+        <QueueSocketProvider key={activeSession.doctorId + activeKey} doctorId={activeSession.doctorId}>
+          <QueueTracker session={activeSession} onStale={handleStale} />
         </QueueSocketProvider>
       ) : (
         <NotCheckedIn />

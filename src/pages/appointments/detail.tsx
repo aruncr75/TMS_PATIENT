@@ -3,6 +3,7 @@ import { useAppointment } from '@/hooks/use-appointment'
 import { useDoctorSlotMap } from '@/hooks/use-slots'
 import { useDoctors } from '@/hooks/use-doctors'
 import { canCancel, canCheckIn, canReschedule } from '@/lib/appointments'
+import { readCheckInSession } from '@/hooks/use-checkin'
 import { formatDateTime } from '@/lib/utils/date'
 import { PageHeader } from '@/components/layout/page-header'
 import { StatusBadge } from '@/components/status-badge'
@@ -67,9 +68,20 @@ export default function AppointmentDetailPage() {
                   </Button>
                 )}
                 {appt.status === 'checked_in' && (
-                  <Button fullWidth onClick={() => navigate('/queue')}>
-                    View live queue
-                  </Button>
+                  <>
+                    {(() => {
+                      const session = readCheckInSession(appt.id)
+                      return session ? (
+                        <div className="rounded-2xl border border-brand-200 bg-brand-50/50 p-4 text-center">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Your Token</p>
+                          <p className="mt-1 text-3xl font-extrabold tabular-nums text-brand-900">#{session.tokenNumber}</p>
+                        </div>
+                      ) : null
+                    })()}
+                    <Button fullWidth onClick={() => navigate(`/queue?appointmentId=${appt.id}`)}>
+                      View live queue
+                    </Button>
+                  </>
                 )}
                 {canReschedule(appt.status) && (
                   <Button

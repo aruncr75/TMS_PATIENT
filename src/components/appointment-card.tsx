@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { formatDateTime } from '@/lib/utils/date'
 import { StatusBadge } from '@/components/status-badge'
+import { readCheckInSession } from '@/hooks/use-checkin'
 import type { AppointmentView, SlotView } from '@/types/api'
 
 interface AppointmentCardProps {
@@ -13,6 +14,8 @@ interface AppointmentCardProps {
 // Shared summary card linking to the appointment detail. Time is resolved from the
 // slot map; an unresolved slot degrades to "Time unavailable" without breaking.
 export function AppointmentCard({ appointment, slot, doctorName }: AppointmentCardProps) {
+  const checkInSession = appointment.status === 'checked_in' ? readCheckInSession(appointment.id) : null
+
   return (
     <Link
       to={`/appointments/${appointment.id}`}
@@ -21,7 +24,14 @@ export function AppointmentCard({ appointment, slot, doctorName }: AppointmentCa
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <p className="truncate font-semibold text-gray-900">{doctorName ?? 'Doctor'}</p>
-          <StatusBadge status={appointment.status} />
+          <div className="flex items-center gap-2">
+            {checkInSession && (
+              <span className="rounded-md bg-brand-100 px-2 py-0.5 text-xs font-bold text-brand-800">
+                Token #{checkInSession.tokenNumber}
+              </span>
+            )}
+            <StatusBadge status={appointment.status} />
+          </div>
         </div>
         <p className="mt-1 text-sm text-gray-600">
           {slot ? formatDateTime(slot.startAt) : 'Time unavailable'}
