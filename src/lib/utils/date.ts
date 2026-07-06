@@ -42,6 +42,17 @@ export function todayInClinicTz(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: _clinicTz }) // YYYY-MM-DD
 }
 
+export function isSlotDateBeforeToday(iso?: string): boolean {
+  if (!iso) return false
+  try {
+    const slotDay = new Date(iso).toLocaleDateString('en-CA', { timeZone: _clinicTz })
+    return slotDay < todayInClinicTz()
+  } catch {
+    return false
+  }
+}
+
+
 // Format a date-only `YYYY-MM-DD` value (e.g. a dependent's dateOfBirth) for display.
 // Date-only values are NOT instants: do NOT route them through `formatDate`, which parses
 // them as UTC midnight and shifts the calendar day backwards in any negative-offset zone.

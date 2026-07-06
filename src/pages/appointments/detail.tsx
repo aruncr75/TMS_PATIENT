@@ -4,7 +4,7 @@ import { useDoctorSlotMap } from '@/hooks/use-slots'
 import { useDoctors } from '@/hooks/use-doctors'
 import { canCancel, canCheckIn, canReschedule } from '@/lib/appointments'
 import { readCheckInSession } from '@/hooks/use-checkin'
-import { formatDateTime } from '@/lib/utils/date'
+import { formatDateTime, isSlotDateBeforeToday } from '@/lib/utils/date'
 import { PageHeader } from '@/components/layout/page-header'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,9 @@ export default function AppointmentDetailPage() {
   const { data: appt, isPending, isError } = useAppointment(id)
   const { resolveSlot } = useDoctorSlotMap(appt?.doctorId)
   const { data: doctors } = useDoctors()
+
+  const slot = appt ? resolveSlot(appt.slotId) : undefined
+  const isPast = isSlotDateBeforeToday(slot?.startAt)
 
   return (
     <div>
@@ -41,10 +44,7 @@ export default function AppointmentDetailPage() {
                 <StatusBadge status={appt.status} />
               </div>
               <p className="mt-1 text-sm text-gray-600">
-                {(() => {
-                  const slot = resolveSlot(appt.slotId)
-                  return slot ? formatDateTime(slot.startAt) : 'Time unavailable'
-                })()}
+                {slot ? formatDateTime(slot.startAt) : 'Time unavailable'}
               </p>
 
               <dl className="mt-4 space-y-2 border-t border-gray-100 pt-4 text-sm">
@@ -57,12 +57,18 @@ export default function AppointmentDetailPage() {
               </dl>
             </div>
 
-            {(canCheckIn(appt.status) ||
+            {isPast && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-center text-xs font-medium text-amber-800">
+                This appointment was for a past date.
+              </div>
+            )}
+
+            {(canCheckIn(appt.status, slot?.startAt) ||
               appt.status === 'checked_in' ||
-              canReschedule(appt.status) ||
-              canCancel(appt.status)) && (
+              canReschedule(appt.status, slot?.startAt) ||
+              canCancel(appt.status, slot?.startAt)) && (
               <div className="flex flex-col gap-3">
-                {canCheckIn(appt.status) && (
+                {canCheckIn(appt.status, slot?.startAt) && (
                   <Button fullWidth onClick={() => navigate(`/appointments/${appt.id}/checkin`)}>
                     Check in
                   </Button>
@@ -83,16 +89,16 @@ export default function AppointmentDetailPage() {
                     </Button>
                   </>
                 )}
-                {canReschedule(appt.status) && (
+                {canReschedule(appt.status, slot?.startAt) && (
                   <Button
-                    variant={canCheckIn(appt.status) ? 'secondary' : 'primary'}
+                    variant={canCheckIn(appt.status, slot?.startAt) ? 'secondary' : 'primary'}
                     fullWidth
                     onClick={() => navigate(`/appointments/${appt.id}/reschedule`)}
                   >
                     Reschedule
                   </Button>
                 )}
-                {canCancel(appt.status) && (
+                {canCancel(appt.status, slot?.startAt) && (
                   <Button
                     variant="ghost"
                     fullWidth

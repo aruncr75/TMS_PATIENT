@@ -54,9 +54,9 @@ export default function CheckInPage() {
               View live queue
             </Button>
           </div>
-        ) : !canCheckIn(appt.status) ? (
+        ) : !canCheckIn(appt.status, slot?.startAt) ? (
           <p className="py-8 text-center text-sm text-gray-500" role="alert">
-            This appointment can't be checked in.
+            This appointment was for a past date and cannot be checked in.
           </p>
         ) : (
           <>

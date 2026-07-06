@@ -32,7 +32,10 @@ export default function AppointmentsListPage() {
       new Date(resolveSlot(a.slotId)?.startAt ?? a.createdAt).getTime()
     const up: AppointmentView[] = []
     const pa: AppointmentView[] = []
-    for (const a of appointments ?? []) (isUpcoming(a.status) ? up : pa).push(a)
+    for (const a of appointments ?? []) {
+      const slot = resolveSlot(a.slotId)
+      ;(isUpcoming(a.status, slot?.startAt) ? up : pa).push(a)
+    }
     up.sort((a, b) => sortTime(a) - sortTime(b)) // soonest first
     pa.sort((a, b) => sortTime(b) - sortTime(a)) // most recent first
     return { upcoming: up, past: pa }
