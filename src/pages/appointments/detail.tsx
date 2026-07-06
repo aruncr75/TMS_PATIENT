@@ -48,6 +48,7 @@ export default function AppointmentDetailPage() {
               </p>
 
               <dl className="mt-4 space-y-2 border-t border-gray-100 pt-4 text-sm">
+                <InfoRow label="Appointment ID" value={`#${appt.id.slice(-6).toUpperCase()}`} />
                 <InfoRow label="Consultation" value={titleCase(appt.consultationType)} />
                 <InfoRow label="Payment" value={titleCase(appt.paymentStatus)} />
                 {appt.reasonForVisit && (

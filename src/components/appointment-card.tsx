@@ -36,6 +36,9 @@ export function AppointmentCard({ appointment, slot, doctorName }: AppointmentCa
         <p className="mt-1 text-sm text-gray-600">
           {slot ? formatDateTime(slot.startAt) : 'Time unavailable'}
         </p>
+        <p className="mt-0.5 text-xs font-mono text-gray-400">
+          Ref #{appointment.id.slice(-6).toUpperCase()}
+        </p>
       </div>
       <svg
         viewBox="0 0 24 24"
